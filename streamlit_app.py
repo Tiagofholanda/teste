@@ -1,40 +1,60 @@
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-"""
-# Welcome to Streamlit!
+# Título da aplicação
+st.title('Minha Carteira de Ações')
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:.
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# DataFrame inicial vazio para armazenar as ações
+carteira = pd.DataFrame(columns=['Símbolo', 'Quantidade', 'Preço de Compra'])
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+# Função para adicionar ação à carteira
+def adicionar_acao(symbol, quantity, purchase_price):
+    global carteira
+    carteira = carteira.append({
+        'Símbolo': symbol,
+        'Quantidade': quantity,
+        'Preço de Compra': purchase_price
+    }, ignore_index=True)
 
-num_points = st.slider("Number of points in spiral", 1, 10000, 1100)
-num_turns = st.slider("Number of turns in spiral", 1, 300, 31)
+# Função para calcular o preço médio da carteira
+def calcular_preco_medio():
+    global carteira
+    if not carteira.empty:
+        preco_medio = (carteira['Quantidade'] * carteira['Preço de Compra']).sum() / carteira['Quantidade'].sum()
+        return preco_medio
+    else:
+        return None
 
-indices = np.linspace(0, 1, num_points)
-theta = 2 * np.pi * num_turns * indices
-radius = indices
+# Função para exibir a carteira completa
+def exibir_carteira():
+    st.subheader('Carteira Atualizada')
+    st.write(carteira)
 
-x = radius * np.cos(theta)
-y = radius * np.sin(theta)
+# Barra de navegação
+menu = ['Minha Carteira', 'Adicionar Ações', 'Calcular Preço Médio']
+choice = st.sidebar.selectbox('Menu', menu)
 
-df = pd.DataFrame({
-    "x": x,
-    "y": y,
-    "idx": indices,
-    "rand": np.random.randn(num_points),
-})
+# Lógica para as opções do menu
+if choice == 'Minha Carteira':
+    exibir_carteira()
+elif choice == 'Adicionar Ações':
+    st.subheader('Adicionar Ações à Carteira')
+    symbol = st.text_input('Digite o símbolo da ação (ex: AAPL para Apple)')
+    quantity = st.number_input('Digite a quantidade de ações', min_value=1)
+    purchase_price = st.number_input('Digite o preço de compra por ação', min_value=0.01)
+    
+    if st.button('Adicionar à Carteira'):
+        adicionar_acao(symbol, quantity, purchase_price)
+        st.success('Ação adicionada com sucesso!')
+        exibir_carteira()
 
-st.altair_chart(alt.Chart(df, height=700, width=700)
-    .mark_point(filled=True)
-    .encode(
-        x=alt.X("x", axis=None),
-        y=alt.Y("y", axis=None),
-        color=alt.Color("idx", legend=None, scale=alt.Scale()),
-        size=alt.Size("rand", legend=None, scale=alt.Scale(range=[1, 150])),
-    ))
+elif choice == 'Calcular Preço Médio':
+    st.subheader('Calcular Preço Médio da Carteira')
+    preco_medio = calcular_preco_medio()
+    if preco_medio is not None:
+        st.write(f'O preço médio da carteira é: R$ {preco_medio:.2f}')
+    else:
+        st.warning('A carteira está vazia. Adicione ações primeiro.')
+
+# Rodapé
+st.info('Desenvolvido por Tiago F. Holanda')
